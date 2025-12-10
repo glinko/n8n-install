@@ -1,0 +1,292 @@
+{
+  "nodes": [
+    {
+      "id": "toolAgent_0",
+      "position": { "x": 900, "y": 300 },
+      "type": "customNode",
+      "data": {
+        "id": "toolAgent_0",
+        "label": "Universal AI Assistant",
+        "version": 2,
+        "name": "toolAgent",
+        "type": "AgentExecutor",
+        "category": "Agents",
+        "description": "Intelligent agent with access to n8n workflows, database, Telegram bot, and caching",
+        "inputs": {
+          "systemMessage": "You are a helpful AI assistant integrated with n8n automation platform, PostgreSQL database, Redis cache, and Telegram bot.\n\nYour capabilities:\n1. Execute n8n workflows for automation tasks\n2. Query PostgreSQL database for data analysis (read-only)\n3. Manage Telegram bot: send messages, check users, update menu\n4. Use Redis cache for temporary data storage\n5. Search the web for current information\n\nWhen users ask you to:\n- Send notifications → use telegram_bot_manager or n8n_workflow_executor\n- Get user data → use postgres_query_executor\n- Trigger automation → use n8n_workflow_executor\n- Cache results → use redis_cache_manager\n\nAlways explain what you're doing and provide clear, helpful responses.",
+          "maxIterations": 10
+        },
+        "outputAnchors": [
+          {
+            "id": "toolAgent_0-output",
+            "name": "toolAgent",
+            "label": "AgentExecutor",
+            "type": "AgentExecutor | BaseChain | Runnable"
+          }
+        ]
+      },
+      "width": 300,
+      "height": 500
+    },
+    {
+      "id": "chatOllama_0",
+      "position": { "x": 450, "y": 200 },
+      "type": "customNode",
+      "data": {
+        "id": "chatOllama_0",
+        "label": "ChatOllama",
+        "version": 5,
+        "name": "chatOllama",
+        "type": "ChatOllama",
+        "category": "Chat Models",
+        "description": "Ollama chat model",
+        "inputs": {
+          "baseUrl": "http://ollama:11434",
+          "modelName": "llama3.2:latest",
+          "temperature": 0.7,
+          "topP": 0.9,
+          "topK": 40
+        },
+        "outputAnchors": [
+          {
+            "id": "chatOllama_0-output",
+            "name": "chatOllama",
+            "label": "ChatOllama",
+            "type": "ChatOllama"
+          }
+        ]
+      },
+      "width": 300,
+      "height": 500
+    },
+    {
+      "id": "bufferMemory_0",
+      "position": { "x": 450, "y": -100 },
+      "type": "customNode",
+      "data": {
+        "id": "bufferMemory_0",
+        "label": "Conversation Memory",
+        "version": 2,
+        "name": "bufferMemory",
+        "type": "BufferMemory",
+        "category": "Memory",
+        "description": "Maintains conversation context",
+        "inputs": {
+          "sessionId": "",
+          "memoryKey": "chat_history"
+        },
+        "outputAnchors": [
+          {
+            "id": "bufferMemory_0-output",
+            "name": "bufferMemory",
+            "label": "BufferMemory",
+            "type": "BufferMemory | BaseChatMemory | BaseMemory"
+          }
+        ]
+      },
+      "width": 300,
+      "height": 250
+    },
+    {
+      "id": "customTool_n8n",
+      "position": { "x": 50, "y": 50 },
+      "type": "customNode",
+      "data": {
+        "id": "customTool_n8n",
+        "label": "n8n Workflow Executor",
+        "version": 1,
+        "name": "customTool",
+        "type": "CustomTool",
+        "category": "Tools",
+        "description": "Execute n8n workflows",
+        "inputs": {
+          "name": "n8n_workflow_executor",
+          "description": "Execute n8n workflows by name. Available workflows: send_telegram_message, process_user_query, create_workflow, data_extraction",
+          "toolFile": "n8n_workflow_executor-CustomTool.json"
+        },
+        "outputAnchors": [
+          {
+            "id": "customTool_n8n-output",
+            "name": "customTool",
+            "label": "CustomTool",
+            "type": "CustomTool"
+          }
+        ]
+      },
+      "width": 300,
+      "height": 300
+    },
+    {
+      "id": "customTool_postgres",
+      "position": { "x": 50, "y": 400 },
+      "type": "customNode",
+      "data": {
+        "id": "customTool_postgres",
+        "label": "PostgreSQL Query",
+        "version": 1,
+        "name": "customTool",
+        "type": "CustomTool",
+        "category": "Tools",
+        "description": "Query PostgreSQL database",
+        "inputs": {
+          "name": "postgres_query_executor",
+          "description": "Execute SELECT queries on PostgreSQL. Available tables: users, user_events, menu_items, n8n workflow tables",
+          "toolFile": "postgres_query_executor-CustomTool.json"
+        },
+        "outputAnchors": [
+          {
+            "id": "customTool_postgres-output",
+            "name": "customTool",
+            "label": "CustomTool",
+            "type": "CustomTool"
+          }
+        ]
+      },
+      "width": 300,
+      "height": 300
+    },
+    {
+      "id": "customTool_telegram",
+      "position": { "x": 50, "y": 750 },
+      "type": "customNode",
+      "data": {
+        "id": "customTool_telegram",
+        "label": "Telegram Bot Manager",
+        "version": 1,
+        "name": "customTool",
+        "type": "CustomTool",
+        "category": "Tools",
+        "description": "Manage Telegram bot",
+        "inputs": {
+          "name": "telegram_bot_manager",
+          "description": "Send messages, get user info, check stats, manage menu. Actions: send_message, get_user, get_stats, list_users, update_menu",
+          "toolFile": "telegram_bot_manager-CustomTool.json"
+        },
+        "outputAnchors": [
+          {
+            "id": "customTool_telegram-output",
+            "name": "customTool",
+            "label": "CustomTool",
+            "type": "CustomTool"
+          }
+        ]
+      },
+      "width": 300,
+      "height": 300
+    },
+    {
+      "id": "customTool_redis",
+      "position": { "x": 50, "y": 1100 },
+      "type": "customNode",
+      "data": {
+        "id": "customTool_redis",
+        "label": "Redis Cache",
+        "version": 1,
+        "name": "customTool",
+        "type": "CustomTool",
+        "category": "Tools",
+        "description": "Manage Redis cache",
+        "inputs": {
+          "name": "redis_cache_manager",
+          "description": "Cache data in Redis. Operations: get, set, delete, exists, ttl, keys",
+          "toolFile": "redis_cache_manager-CustomTool.json"
+        },
+        "outputAnchors": [
+          {
+            "id": "customTool_redis-output",
+            "name": "customTool",
+            "label": "CustomTool",
+            "type": "CustomTool"
+          }
+        ]
+      },
+      "width": 300,
+      "height": 300
+    },
+    {
+      "id": "serpAPI_0",
+      "position": { "x": 50, "y": 1450 },
+      "type": "customNode",
+      "data": {
+        "id": "serpAPI_0",
+        "label": "Web Search",
+        "version": 1,
+        "name": "serpAPI",
+        "type": "SerpAPI",
+        "category": "Tools",
+        "description": "Search the web for current information",
+        "inputs": {
+          "apiKey": "$vars.serp_api_key"
+        },
+        "outputAnchors": [
+          {
+            "id": "serpAPI_0-output",
+            "name": "serpAPI",
+            "label": "SerpAPI",
+            "type": "SerpAPI"
+          }
+        ]
+      },
+      "width": 300,
+      "height": 250
+    }
+  ],
+  "edges": [
+    {
+      "source": "chatOllama_0",
+      "sourceHandle": "chatOllama_0-output-chatOllama-ChatOllama",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-model-BaseChatModel",
+      "type": "buttonedge",
+      "id": "chatOllama_0-chatOllama_0-output-chatOllama-ChatOllama-toolAgent_0-toolAgent_0-input-model-BaseChatModel"
+    },
+    {
+      "source": "bufferMemory_0",
+      "sourceHandle": "bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-memory-BaseChatMemory",
+      "type": "buttonedge",
+      "id": "bufferMemory_0-bufferMemory_0-output-bufferMemory-BufferMemory|BaseChatMemory|BaseMemory-toolAgent_0-toolAgent_0-input-memory-BaseChatMemory"
+    },
+    {
+      "source": "customTool_n8n",
+      "sourceHandle": "customTool_n8n-output-customTool-CustomTool",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-tools-Tool",
+      "type": "buttonedge",
+      "id": "customTool_n8n-customTool_n8n-output-customTool-CustomTool-toolAgent_0-toolAgent_0-input-tools-Tool"
+    },
+    {
+      "source": "customTool_postgres",
+      "sourceHandle": "customTool_postgres-output-customTool-CustomTool",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-tools-Tool",
+      "type": "buttonedge",
+      "id": "customTool_postgres-customTool_postgres-output-customTool-CustomTool-toolAgent_0-toolAgent_0-input-tools-Tool"
+    },
+    {
+      "source": "customTool_telegram",
+      "sourceHandle": "customTool_telegram-output-customTool-CustomTool",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-tools-Tool",
+      "type": "buttonedge",
+      "id": "customTool_telegram-customTool_telegram-output-customTool-CustomTool-toolAgent_0-toolAgent_0-input-tools-Tool"
+    },
+    {
+      "source": "customTool_redis",
+      "sourceHandle": "customTool_redis-output-customTool-CustomTool",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-tools-Tool",
+      "type": "buttonedge",
+      "id": "customTool_redis-customTool_redis-output-customTool-CustomTool-toolAgent_0-toolAgent_0-input-tools-Tool"
+    },
+    {
+      "source": "serpAPI_0",
+      "sourceHandle": "serpAPI_0-output-serpAPI-SerpAPI",
+      "target": "toolAgent_0",
+      "targetHandle": "toolAgent_0-input-tools-Tool",
+      "type": "buttonedge",
+      "id": "serpAPI_0-serpAPI_0-output-serpAPI-SerpAPI-toolAgent_0-toolAgent_0-input-tools-Tool"
+    }
+  ]
+}
