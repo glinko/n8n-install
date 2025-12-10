@@ -459,7 +459,7 @@ services:
       - SEARXNG_BASE_URL=https://${SEARXNG_HOSTNAME:-localhost}/
       - UWSGI_WORKERS=${SEARXNG_UWSGI_WORKERS:-4}
       - UWSGI_THREADS=${SEARXNG_UWSGI_THREADS:-4}
-    # cap_drop: - ALL  # Temporarily commented out for first run
+    # # cap_drop: - ALL  # Temporarily commented out for first run  # Temporarily commented out for first run
     cap_add:
       - CHOWN
       - SETGID
@@ -1078,3 +1078,35 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+
+  tg-bot:
+    image: python:3.12-slim
+    container_name: tg-bot
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./tg-bot/app:/app/app
+      - ./tg-bot/requirements.txt:/app/requirements.txt
+    command: bash -c "pip install --no-cache-dir -r requirements.txt && PYTHONPATH=/app python -m app"
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      SUPERADMIN_IDS: ${SUPERADMIN_IDS}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: postgres
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"

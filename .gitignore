@@ -11,3 +11,29 @@ supabase/
 dify/
 volumes/
 docker-compose.override.yml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Telegram bot
+tg-bot/.env
+tg-bot/app/db/*.db
