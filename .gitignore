@@ -36,4 +36,9 @@ ENV/
 
 # Telegram bot
 tg-bot/.env
-tg-bot/app/db/*.db
+tg-bot/app/db/*.db.claudecli-data/
+.cursorcli-data/
+.cursorcli/
+secrets
+*.bak
+docker-compose.yml.backup-*

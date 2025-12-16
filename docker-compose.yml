@@ -112,6 +112,7 @@ services:
       - PORT=3001
       - FLOWISE_USERNAME=${FLOWISE_USERNAME}
       - FLOWISE_PASSWORD=${FLOWISE_PASSWORD}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -1079,34 +1080,78 @@ services:
       retries: 5
       start_period: 30s
 
-  tg-bot:
-    image: python:3.12-slim
-    container_name: tg-bot
+  claude-code-console:
+    image: claude-cli-claude-code-console:latest
+    container_name: claude-code-console
     restart: unless-stopped
-    working_dir: /app
+    # Note: Running without user restriction to allow nsenter to work
+    # The host-exec script will handle permissions internally
+    # For production, consider using Docker API approach via tg-bot's !host prefix
+    # user: "1001:1001"  # Commented out to allow nsenter access
+    privileged: true  # Enable privileged mode for host access
+    pid: host  # Share host's PID namespace
+    cap_add:
+      - SYS_ADMIN  # Required for nsenter
+      - SYS_PTRACE  # Required for debugging/tracing
+      - NET_ADMIN  # Network administration
+    security_opt:
+      - apparmor:unconfined  # Disable AppArmor restrictions
     volumes:
-      - ./tg-bot/app:/app/app
-      - ./tg-bot/requirements.txt:/app/requirements.txt
-    command: bash -c "pip install --no-cache-dir -r requirements.txt && PYTHONPATH=/app python -m app"
+      - ./:/home/claude/workspace
+      - ./.claudecli:/home/claude/.config/claude
+      - ./.claudecli-data:/home/claude/.claude
+      - ./scripts/host-exec-nsenter.sh:/usr/local/bin/host-exec:ro  # Mount host-exec script
+    entrypoint: ["tail", "-f", "/dev/null"]
+    profiles: ["claude"]
+
+  cursor-code-console:
+    image: cursor-cli-cursor-code-console:latest
+    container_name: cursor-code-console
+    restart: unless-stopped
+    # Note: Running without user restriction to allow nsenter to work
+    # The host-exec script will handle permissions internally
+    # For production, consider using Docker API approach via tg-bot's !host prefix
+    privileged: true  # Enable privileged mode for host access
+    pid: host  # Share host's PID namespace
+    cap_add:
+      - SYS_ADMIN  # Required for nsenter
+      - SYS_PTRACE  # Required for debugging/tracing
+      - NET_ADMIN  # Network administration
+    security_opt:
+      - apparmor:unconfined  # Disable AppArmor restrictions
     environment:
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      SUPERADMIN_IDS: ${SUPERADMIN_IDS}
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_NAME: postgres
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DB: 0
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "1m"
-        max-file: "1"
+      - CURSOR_API_KEY=${CURSOR_API_KEY}
+    volumes:
+      - ./:/home/cursor/workspace
+      - ./.cursorcli:/home/cursor/.config/cursor
+      - ./.cursorcli-data:/home/cursor/.cursor
+      - ./scripts/host-exec-nsenter.sh:/usr/local/bin/host-exec:ro  # Mount host-exec script
+    # entrypoint: ["tail", "-f", "/dev/null"]  # Commented out - using startup.sh from Dockerfile
+    profiles: ["cursor"]
+
+  chatgpt-cli:
+    build:
+      context: ./chatgpt-cli
+      dockerfile: Dockerfile
+    image: chatgpt-cli-chatgpt-cli:latest
+    container_name: chatgpt-cli
+    restart: unless-stopped
+    working_dir: /home/chatgpt/workspace
+    privileged: true  # Enable privileged mode for host access
+    pid: host  # Share host's PID namespace
+    cap_add:
+      - SYS_ADMIN  # Required for nsenter
+      - SYS_PTRACE  # Required for debugging/tracing
+      - NET_ADMIN  # Network administration
+    security_opt:
+      - apparmor:unconfined  # Disable AppArmor restrictions
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHATGPT_MODEL=${CHATGPT_MODEL:-}  # Optional: override default model
+      - TERM=xterm-256color
+    volumes:
+      - ./:/home/chatgpt/workspace
+      - ./.chatgptcli:/home/chatgpt/.config/chatgptcli
+      - ./scripts/host-exec-nsenter.sh:/usr/local/bin/host-exec:ro  # Mount host-exec script
+    profiles: ["chatgpt"]
+
